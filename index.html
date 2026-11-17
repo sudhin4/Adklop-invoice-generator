@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoice Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=4">
+</head>
+<body>
+<header class="top">
+  <h1>Invoices</h1>
+  <nav>
+    <button class="tab active" data-tab="create">Create</button>
+    <button class="tab" data-tab="clients">Clients</button>
+    <button class="tab" data-tab="track">Tracking</button>
+  </nav>
+</header>
+
+<main>
+<!-- CREATE -->
+<section id="create" class="view active">
+  <form id="form" class="panel" autocomplete="off">
+    <h2 id="formTitle">New invoice</h2>
+
+    <fieldset>
+      <legend>Invoice</legend>
+      <div class="grid">
+        <label>Invoice no<input id="no" required></label>
+        <label>Date<input type="date" id="date" required></label>
+        <label>Due date<input type="date" id="due"></label>
+        <label>Status
+          <select id="status"><option value="pending">Pending</option><option value="paid">Paid</option></select>
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>From (saved for next time)</legend>
+      <div class="grid">
+        <label>Name<input id="sName"></label>
+        <label>Company<input id="sCompany"></label>
+        <label>Address<input id="sAddress"></label>
+        <label>Phone<input id="sPhone"></label>
+        <label>Logo<input type="file" id="logo" accept="image/*"></label>
+        <label>Payment QR<input type="file" id="qr" accept="image/*"></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Issued to</legend>
+      <label>Quick pick<select id="clientPick"></select></label>
+      <div class="grid">
+        <label>Client name<input id="cName" required></label>
+        <label>Client company<input id="cCompany"></label>
+        <label>Client address<input id="cAddress"></label>
+        <label>Phone<input id="cPhone"></label>
+        <label class="wide">Email<input type="email" id="cEmail"></label>
+      </div>
+      <label class="check"><input type="checkbox" id="saveClient" checked> Save this client for next time</label>
+      <button type="button" class="ghost" id="saveClientBtn" style="margin-top:8px">Save client now</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>Items</legend>
+      <div id="items"></div>
+      <button type="button" class="ghost" id="addItem">Add item</button>
+      <p class="total-line">Total <strong id="totalText">₹ 0</strong></p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Footer</legend>
+      <label>Note<textarea id="note" rows="3"></textarea></label>
+      <label>Closing line<input id="tagline"></label>
+    </fieldset>
+
+    <div class="actions">
+      <button type="submit" class="solid" id="saveBtn">Save invoice</button>
+      <button type="button" class="ghost" id="pdfBtn">Download PDF</button>
+      <button type="button" class="ghost" id="resetBtn">Clear</button>
+    </div>
+  </form>
+
+  <div class="preview-wrap panel" id="previewWrap">
+    <div id="preview" class="paper"></div>
+  </div>
+</section>
+
+<!-- CLIENTS -->
+<section id="clients" class="view">
+  <form id="clientForm" class="panel" autocomplete="off">
+    <h2 id="clientTitle">Add client</h2>
+    <div class="grid c5">
+      <label>Name<input id="clName" required></label>
+      <label>Company<input id="clCompany"></label>
+      <label>Address<input id="clAddress"></label>
+      <label>Phone<input id="clPhone"></label>
+      <label>Email<input type="email" id="clEmail"></label>
+    </div>
+    <div class="actions" style="border:0;padding-top:0;margin-top:0">
+      <button type="submit" class="solid" id="clientSave">Add client</button>
+      <button type="button" class="ghost" id="clientCancel" hidden>Cancel</button>
+    </div>
+  </form>
+  <div class="panel" style="margin-top:18px">
+    <div class="toolbar">
+      <input id="clientSearch" placeholder="Search clients">
+      <button type="button" class="ghost" id="backupBtn">Export backup</button>
+      <button type="button" class="ghost" id="restoreBtn">Import backup</button>
+      <input type="file" id="restoreFile" accept="application/json" hidden>
+    </div>
+    <p class="note" id="storeNote"></p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Client</th><th>Phone</th><th>Email</th><th>Invoices</th><th class="r">Outstanding</th><th></th></tr></thead>
+        <tbody id="clientRows"></tbody>
+      </table>
+    </div>
+    <p id="clientEmpty" class="empty" hidden>No clients yet. Add one above, or save a client while creating an invoice.</p>
+  </div>
+</section>
+
+<!-- TRACK -->
+<section id="track" class="view">
+  <div class="stats" id="stats"></div>
+  <div class="panel">
+    <div class="toolbar">
+      <input id="search" placeholder="Search by client or invoice no">
+      <select id="filter">
+        <option value="all">All statuses</option>
+        <option value="pending">Pending</option>
+        <option value="paid">Paid</option>
+        <option value="overdue">Overdue</option>
+      </select>
+      <button class="ghost" id="csvBtn">Export CSV</button>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>No</th><th>Client</th><th>Date</th><th>Due</th><th class="r">Amount</th><th>Status</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p id="empty" class="empty" hidden>No invoices yet. Create one and save it to start tracking.</p>
+  </div>
+</section>
+</main>
+
+<div id="export" class="paper export"></div>
+<div id="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="script.js?v=4"></script>
+</body>
+</html>
